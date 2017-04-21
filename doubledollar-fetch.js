@@ -146,6 +146,7 @@ $$.query = function(ele, expr) {
 /// Shortcut for $$.query
 $$.q = $$.query;
 
+/// Get element by ID
 $$.id = function(eid) {
     return document.getElementById(eid);
 }
@@ -179,22 +180,18 @@ $$.empty2fragment = function(ele) {
  * - options.params: Object of parameters to add to the URL
  * - options.body: Content to send to request
  * - options.headers: Object of headers to add to the request
- * - options.responseType: Passed directly to XHR
- * - options.withCredentials: "Indicates whether or not cross-site 
- *   Access-Control requests should be made using credentials such as cookies or
- *   authorization headers. The default is false." (MDN)
- * - options.timeout: How long to wait (in milliseconds) before failing the request
- * - options.progress: Function to call with progress events
  *
- * The returned promise is resolved if the HTTP request completes, regardless of
- * the status code. It is rejected if the request fails.
+ * The returned promise is resolved if the HTTP request is successful (returning
+ * the response). If it fails or there is an HTTP error, it rejects with the
+ * response or the error.
  */
  $$.ajax = function(method, url, options) {
     return new Promise(function(resolve, reject) {
         var init = {
             redirect: 'follow',
             credentials: 'same-origin',  // FIXME: Set to 'cors' if it's not same origin
-            headers: {}
+            headers: {},
+            redirect: 'follow',
         };
         init.method = method.toUpperCase();
 
@@ -205,8 +202,6 @@ $$.empty2fragment = function(ele) {
         if (options.headers) {
             init.headers = options.headers;
         }
-        // This bit is Django-specific. If you copy this library, you'll probably want to remove it
-        init.headers['X-CSRFToken'] = $$.getCookies().csrftoken;
 
         var body = options.body;
         if ($$.isPlainObject(options.body)) {
@@ -259,14 +254,22 @@ $$.post = function(url, body, options) {
 /** {{{ JSON Requests **/
 
 $$.json = {
+    /// Performs a JSON GET, taking URL parameters and resolving to a JSON object.
     get: function(url, params, options) {
         if (!options) {
             options = {};
         }
+        if (!options.headers) {
+          options.headers = {};
+        }
         options.params = params;
         options.responseType = "json";
-        return $$.ajax('GET', url, options);
+        options.headers['Accept'] = 'application/json, */*;q=0.5';
+        return $$.ajax('GET', url, options).then(function (response) {
+            return response.json();
+        });
     },
+    /// Performs a JSON POST, taking the body and resolving to a JSON object.
     post: function(url, body, options) {
         if (!options) {
             options = {};
@@ -276,9 +279,12 @@ $$.json = {
         }
         options.body = JSON.stringify(body);
         options.headers['Content-Type'] = 'application/json';
-        options.responseType = "json";
-        return $$.ajax('POST', url, options);
+        options.headers['Accept'] = 'application/json, */*;q=0.5';
+        return $$.ajax('POST', url, options).then(function (response) {
+            return response.json();
+        });
     },
+    /// Performs a JSON PUT, taking the body and resolving to a JSON object.
     put: function(url, body, options) {
         if (!options) {
             options = {};
@@ -288,15 +294,24 @@ $$.json = {
         }
         options.body = JSON.stringify(body);
         options.headers['Content-Type'] = 'application/json';
-        options.responseType = "json";
-        return $$.ajax('PUT', url, options);
+        options.headers['Accept'] = 'application/json, */*;q=0.5';
+        return $$.ajax('PUT', url, options).then(function (response) {
+            return response.json();
+        });
     },
+    /// Performs a JSON DELETE, resolving to a JSON object.
     delete: function(url, options) {
         if (!options) {
             options = {};
         }
+        if (!options.headers) {
+            options.headers = {};
+        }
         options.responseType = "json";
-        return $$.ajax('DELETE', url, options);
+        options.headers['Accept'] = 'application/json, */*;q=0.5';
+        return $$.ajax('DELETE', url, options).then(function (response) {
+            return response.json();
+        });
     }
 };
 

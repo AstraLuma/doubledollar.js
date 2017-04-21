@@ -77,6 +77,9 @@ largely just supplements vanilla DOM. Uses promises extensively.
 
 var $$ = {};
 
+// Create a namespace for global constants
+(function($$) {
+
 /** {{{ DOM wrappers **/
 
 /**
@@ -143,6 +146,11 @@ $$.query = function(ele, expr) {
 /// Shortcut for $$.query
 $$.q = $$.query;
 
+/// Get element by ID
+$$.id = function(eid) {
+    return document.getElementById(eid);
+}
+
 /**
  * Empties an element, moving all of its children to a document fragment.
  *
@@ -179,8 +187,9 @@ $$.empty2fragment = function(ele) {
  * - options.timeout: How long to wait (in milliseconds) before failing the request
  * - options.progress: Function to call with progress events
  *
- * The returned promise is resolved if the HTTP request completes, regardless of
- * the status code. It is rejected if the request fails.
+ * The returned promise is resolved if the HTTP request completes (with the XHR
+ * object), regardless of the status code. It is rejected (with the XHR object)
+ * if the request fails.
  */
 $$.ajax = function(method, url, options) {
     return new Promise(function(resolve, reject) {
@@ -379,4 +388,29 @@ $$.isPlainObject = function (o) {
     // From https://stackoverflow.com/questions/5876332/how-can-i-differentiate-between-an-object-literal-other-javascript-objects
     return typeof o == 'object' && o.constructor == Object;
 };
+
+var rtrim = /^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g;
+$$.trim = function( text ) {
+    return text == null ?
+        "" :
+        ( text + "" ).replace( rtrim, "" );
+};
+
+var _cookiejar;
+
+$$.getCookies = function () {
+    if (!_cookiejar && document.cookie && document.cookie != '') {
+        _cookiejar = {};
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = $$.trim(cookies[i]);
+            cookie = cookie.split('=', 2);
+            _cookiejar[cookie[0]] = decodeURIComponent(cookie[1]);
+        }
+    }
+    return _cookiejar;
+}
+
 /** }}} **/
+
+})($$);
