@@ -381,6 +381,12 @@ $$.location = function(options) {
     });
 }
 
+/// Resolves when the document is ready (DOMContentReady)
+$$.ready = function() {
+    return new Promise(function(resolve, reject) {
+        document.addEventListener("DOMContentLoaded", resolve);
+    });
+};
 /** }}} **/
 
 /** {{{ Utilities **/
