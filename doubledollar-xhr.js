@@ -89,7 +89,7 @@ $$.createElement = function(tag, attrs, children) {
     var ele = document.createElement(tag);
 
     if (attrs) {
-        for(a in attrs) {
+        for(var a in attrs) {
             ele.setAttribute(a, attrs[a]);
         }
     }
